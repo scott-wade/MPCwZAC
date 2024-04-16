@@ -1,0 +1,61 @@
+
+
+
+
+
+
+function vis_traj!(vis, name, X; R = 0.1, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
+    # visualize a trajectory expressed with X::Vector{Vector}
+    for i = 1:(length(X)-1)
+        a = X[i][1:3]
+        b = X[i+1][1:3]
+        cyl = mc.Cylinder(mc.Point(a...), mc.Point(b...), R)
+        mc.setobject!(vis[name]["p"*string(i)], cyl, mc.MeshPhongMaterial(color=color))
+    end
+    for i = 1:length(X)
+        a = X[i][1:3]
+        sph = mc.HyperSphere(mc.Point(a...), R)
+        mc.setobject!(vis[name]["s"*string(i)], sph, mc.MeshPhongMaterial(color=color))
+    end
+end
+
+function animate_hexrotor(Xsim, Xref, dt)
+    # animate hexrotor, show Xref with vis_traj!, and track Xref with the green sphere
+    vis = mc.Visualizer()
+    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly.obj"))
+    mc.setobject!(vis[:vic], robot_obj)
+
+    vis_traj!(vis, :traj, Xref; R = 0.01, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
+    target = mc.HyperSphere(mc.Point(0,0,0.0),0.1)
+    mc.setobject!(vis[:target], target, mc.MeshPhongMaterial(color = mc.RGBA(0.0,1.0,0.0,0.4)))
+
+
+    anim = mc.Animation(floor(Int,1/dt))
+    for k = 1:length(Xsim)
+        mc.atframe(anim, k) do
+            r = Xsim[k][1:3]
+            p = Xsim[k][7:9]
+            mc.settransform!(vis[:vic], mc.compose(mc.Translation(r),mc.LinearMap(1.5*(dcm_from_mrp(p)))))
+            mc.settransform!(vis[:target], mc.Translation(Xref[k][1:3]))
+        end
+    end
+    mc.setanimation!(vis, anim)
+
+    return (mc.render(vis))
+end
+
+
+
+
+# mc.settransform!(vis[:dragon][:base], mc.Translation([0,0,-.34]) ∘ mc.LinearMap(0.002*dcm_from_phi(pi/2*[1,0,0])))
+# <https://github.com/Optimal-Control-16-745/HW2_S24|Optimal-Control-16-745/HW2_S24>Optimal-Control-16-745/HW2_S24 | Added by GitHub
+
+
+# 12:12
+# this line specifically
+# 12:12
+# I define all the offsets using vis[:dragon][:base] (edited) 
+# 12:12
+# and then when I animate, I do things with just vis[:dragon] (edited) 
+# 12:14
+# mc.settransform!(vis[:dragon][:base], mc.Translation(r_offset) ∘ mc.LinearMap(scale * rotation_matrix_offset))
