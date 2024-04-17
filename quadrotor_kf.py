@@ -160,8 +160,8 @@ wind_covariance = np.diag([0.01] * 3 + [0] * 9)  # Variance in the translational
 
 # System matrices (would be computed from the system's dynamics)
 A, B = linearize(state_eq, input_eq, dt)
-B_d = np.zeros((n_states, n_states))  # Effect of disturbance on the state
-B_d[:3, :3] = np.eye(3)  # Assuming wind affects only the translational states
+B_d = 100 * np.ones((n_states, n_states))  # Effect of disturbance on the state
+# B_d[:3, :3] = np.eye(3)  # Assuming wind affects only the translational states
 
 # Noise covariances
 Q = np.eye(n_states) * 0.01  # Process noise covariance
