@@ -53,8 +53,7 @@ def quadrotor_dynamics(state, inputs, dt):
     ])
     
     return new_state
-
-import numpy as np
+    
 
 def linearize(state_eq, input_eq, dt):
     """
@@ -107,71 +106,86 @@ def linearize(state_eq, input_eq, dt):
     return A, B
 
 
-def kalman_filter(A, B, Q, R, x_hat, P, u, y):
+def kalman_filter(A, B, B_d, Q, R, x_hat, P, u, y, wind_mean, wind_covariance):
     """
-    Kalman Filter implementation for a single time-step (has to be linear)
+    Kalman Filter implementation for a single time-step with disturbance (wind) model
 
     Inputs:
-    x_hat: Previous state estimate
-    P: Previous estimate covariance
-    u: Control input
-    y: Measurement at current time step
+    - A: System matrix
+    - B: Input matrix
+    - B_d: Disturbance effect matrix
+    - Q: Process noise covariance
+    - R: Measurement noise covariance
+    - x_hat: Previous state estimate
+    - P: Previous estimate covariance
+    - u: Control input
+    - y: Measurement at current time step
+    - wind_mean: Mean of the wind disturbance
+    - wind_covariance: Covariance of the wind disturbance
 
     Returns:
-    
+    - x_hat_plus: Updated state estimate
+    - P_plus: Updated estimate covariance
     """
+    # Generate disturbance (wind) sample
+    d_t = np.random.multivariate_normal(wind_mean, wind_covariance)
 
     # Prediction Step
-    x_hat_minus = A @ x_hat + B @ u
+    x_hat_minus = A @ x_hat + B @ u + B_d @ d_t
     P_minus = A @ P @ A.T + Q
 
     # Update Step
-    K = P_minus @ C.T @ np.linalg.inv(C @ P_minus @ C.T + R) # Kalman gain
-    x_hat_plus = x_hat_minus + K @ (y - C @ x_hat_minus - D @ u)
+    C = np.eye(len(x_hat))  # Assuming we are measuring all states
+    K = P_minus @ C.T @ np.linalg.inv(C @ P_minus @ C.T + R)  # Kalman gain
+    x_hat_plus = x_hat_minus + K @ (y - C @ x_hat_minus)
     P_plus = (np.eye(len(P)) - K @ C) @ P_minus
 
     return x_hat_plus, P_plus
 
+
 # Simulation parameters
 dt = 0.01  # Time step
-time = np.arange(0, 1, dt)  # Simulation time
+total_time = 10.0  # Total simulation time
+time = np.arange(0, total_time, dt)  # Simulation time array
 n_states = 12  # Number of states
 n_inputs = 4  # Number of inputs
-state_eq = np.zeros(n_states)  # Equilibrium state (hovering)
-input_eq = np.array([9.81, 0, 0, 0])  # Equilibrium input (counteracting gravity)
-Q = np.eye(n_states) * 0.01  # Process noise covariance (simulated)
-R = np.eye(n_states) * 0.1  # Measurement noise covariance (simulated)
+
+# Equilibrium state and input (hovering)
+state_eq = np.zeros(n_states)
+input_eq = np.array([9.81, 0, 0, 0])  # Input to counteract gravity
+
+# Disturbance (wind) model parameters
+wind_mean = np.zeros(n_states)  # Assume wind has zero mean
+wind_covariance = np.diag([0.01] * 3 + [0] * 9)  # Variance in the translational states (x, y, z)
+
+# System matrices (would be computed from the system's dynamics)
+A, B = linearize(state_eq, input_eq, dt)
+B_d = np.zeros((n_states, n_states))  # Effect of disturbance on the state
+B_d[:3, :3] = np.eye(3)  # Assuming wind affects only the translational states
+
+# Noise covariances
+Q = np.eye(n_states) * 0.01  # Process noise covariance
+R = np.eye(n_states) * 0.1  # Measurement noise covariance
 
 # Initial state and covariance
-x_hat = np.zeros(n_states)
-P = np.eye(n_states)
+x_hat = np.zeros(n_states)  # Initial estimate
+P = np.eye(n_states)  # Initial estimate covariance
 
 # Storage for simulation results
 true_states = []
 estimated_states = []
 
 for t in time:
-    # Simulate the true dynamics
-    if t < 0.5:
-        inputs = np.array([9.81, 0.1, 0.1, 0])  # Slight control input for demonstration
-    else:
-        inputs = np.array([9.81, -0.1, -0.1, 0])  # Change control input
-    
-    true_state = quadrotor_dynamics(x_hat, inputs, dt)
+    # Simulate true dynamics with random wind disturbance
+    wind_disturbance = np.random.multivariate_normal(wind_mean, wind_covariance)
+    true_state = quadrotor_dynamics(x_hat, input_eq, dt) + B_d @ wind_disturbance
     true_states.append(true_state)
     
     # Generate noisy measurements
     measurements = true_state + np.random.normal(0, 0.1, n_states)
     
-    # Linearize the dynamics around the current estimated state and input
-    A, B = linearize(x_hat, inputs, dt)
-    
     # Kalman filter to estimate the state
-    # Assuming C is an identity matrix and D is a zero matrix
-    C = np.eye(n_states)
-    D = np.zeros((n_states, n_inputs))
-    
-    x_hat, P = kalman_filter(A, B, Q, R, x_hat, P, inputs, measurements)
+    x_hat, P = kalman_filter(A, B, B_d, Q, R, x_hat, P, input_eq, measurements, wind_mean, wind_covariance)
     estimated_states.append(x_hat)
 
 # Convert results to numpy arrays for plotting
@@ -186,7 +200,8 @@ for i, label in enumerate(['x', 'y', 'z', 'vx', 'vy', 'vz', 'phi (Roll)', 'theta
     plt.subplot(4, 3, i+1)
     plt.plot(time, true_states[:, i], label='True')
     plt.plot(time, estimated_states[:, i], label='Estimated', linestyle='--')
-    plt.title(label)
+    plt.xlabel('Time (s)')
+    plt.ylabel(label)
     plt.legend()
 
 plt.tight_layout()
