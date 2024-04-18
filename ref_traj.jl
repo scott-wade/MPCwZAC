@@ -12,7 +12,7 @@ function create_ref_hover(model, N, dt, n_inputs)
     hover_attitude = [0.0; 0.0; 0.0]  # No roll, pitch, yaw
     hover_angvelocity= [0.0; 0.0; 0.0] # no angular velocity
     
-    Xref= [zeros(3) for i = 1:N]
+    Xref= [zeros(12) for i = 1:N]
     for i= 1:N
         Xref[i]= [hover_position; hover_velocity; hover_attitude; hover_angvelocity]
     end
