@@ -4,7 +4,7 @@ function create_ref_hover(model, N, dt, n_inputs)
     kf = model.kf
 
     # hover altitude
-    desired_altitude= 1
+    desired_altitude= 100
 
     # hover state
     hover_position = [0.0; 0.0; desired_altitude]  # Hover at (0, 0, 5)
