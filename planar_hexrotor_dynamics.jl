@@ -74,8 +74,6 @@ function hexrotor_dynamics(model::NamedTuple,x,u)
     ]
 end
 
-
-
 function rk4(model,ode,x,u,dt)
     # rk4 for discretizing
     k1 = dt*ode(model,x, u)
@@ -84,9 +82,6 @@ function rk4(model,ode,x,u,dt)
     k4 = dt*ode(model,x + k3, u)
     x + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
 end
-
-
-
 
 
 function vis_traj!(vis, name, X; R = 0.1, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
