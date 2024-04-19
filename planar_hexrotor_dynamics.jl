@@ -102,7 +102,7 @@ end
 function animate_hexrotor(Xsim, Xref, dt)
     # animate quadrotor, show Xref with vis_traj!, and track Xref with the green sphere
     vis = mc.Visualizer()
-    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor.obj"))
+    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly_notilt.obj"))
     mc.setobject!(vis[:vic], robot_obj)
 
     vis_traj!(vis, :traj, Xref; R = 0.01, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
