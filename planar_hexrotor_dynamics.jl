@@ -58,8 +58,8 @@ function hexrotor_dynamics(model::NamedTuple,x,u)
     M6 = km*w6
     
     τ = [
-    L * (F2 - F5),  # Torque about x-axis: Difference of forces between rotor 2 and rotor 5
-    L * ((F1 + F6) - (F3 + F4)),  # Torque about y-axis: Difference of forces between pairs of opposite rotors (1 & 6) and (3 & 4)
+    L * (F2 - F5) + L*(sqrt(3)/2)*(F1+F3 - F4-F6),  # Torque about x-axis: Difference of forces between rotor 2 and rotor 5
+    L * 0.5 * ((F1 + F6) - (F3 + F4)),  # Torque about y-axis: Difference of forces between pairs of opposite rotors (1 & 6) and (3 & 4)
     L * (M1-M2+M3-M4+M5-M6)  # Torque about z-axis: Sum of forces acting on the body
     ]
 
