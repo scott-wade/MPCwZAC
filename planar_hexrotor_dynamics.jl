@@ -80,7 +80,8 @@ function rk4(model,ode,x,u,dt)
     k2 = dt*ode(model,x + k1/2, u)
     k3 = dt*ode(model,x + k2/2, u)
     k4 = dt*ode(model,x + k3, u)
-    x + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
+    result = x + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
+    reshape(result, length(result))
 end
 
 
@@ -99,15 +100,44 @@ function vis_traj!(vis, name, X; R = 0.1, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
     end
 end
 
-function animate_hexrotor(Xsim, Xref, dt)
-    # animate quadrotor, show Xref with vis_traj!, and track Xref with the green sphere
-    vis = mc.Visualizer()
-    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly_notilt.obj"))
-    mc.setobject!(vis[:vic], robot_obj)
+# function animate_hexrotor(Xsim, Xref, dt)
+#     # animate quadrotor, show Xref with vis_traj!, and track Xref with the green sphere
+#     vis = mc.Visualizer()
+#     robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly_notilt.obj"))
+#     mc.setobject!(vis[:vic], robot_obj)
 
-    vis_traj!(vis, :traj, Xref; R = 0.01, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
-    target = mc.HyperSphere(mc.Point(0,0,0.0),0.1)
-    mc.setobject!(vis[:target], target, mc.MeshPhongMaterial(color = mc.RGBA(0.0,1.0,0.0,0.4)))
+#     vis_traj!(vis, :traj, Xref; R = 0.01, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
+#     target = mc.HyperSphere(mc.Point(0,0,0.0),0.1)
+#     mc.setobject!(vis[:target], target, mc.MeshPhongMaterial(color = mc.RGBA(0.0,1.0,0.0,0.4)))
+
+
+#     anim = mc.Animation(floor(Int,1/dt))
+#     for k = 1:length(Xsim)
+#         mc.atframe(anim, k) do
+#             r = Xsim[k][1:3]
+#             p = Xsim[k][7:9]
+#             mc.settransform!(vis[:vic], mc.compose(mc.Translation(r),mc.LinearMap(1.5*(dcm_from_mrp(p)))))
+#             mc.settransform!(vis[:target], mc.Translation(Xref[k][1:3]))
+#         end
+#     end
+#     mc.setanimation!(vis, anim)
+
+#     return (mc.render(vis))
+# end
+
+function animate_hexrotor(Xsim, dt)
+    vis = mc.Visualizer()
+    #robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly_notilt.obj"))
+    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"utils/quadrotor.obj"))
+
+    mc.setobject!(vis[:drone], robot_obj)
+
+    mc.setobject!(vis[:drone][:base], robot_obj, mc.MeshPhongMaterial(color=mc.RGBA(0.6, 0.6, 1.0, 1.0)))
+    mc.settransform!(vis[:drone][:base], mc.Translation([0,0,0]) ∘ mc.LinearMap(0.001 * I))
+
+    # vis_traj!(vis, :traj, Xref[1:85]; R = 0.01, color = mc.RGBA(1.0, 0.0, 0.0, 1.0))
+    # target = mc.HyperSphere(mc.Point(0,0,0.0),0.1)
+    # mc.setobject!(vis[:target], target, mc.MeshPhongMaterial(color = mc.RGBA(0.0,1.0,0.0,0.4)))
 
 
     anim = mc.Animation(floor(Int,1/dt))
@@ -115,8 +145,8 @@ function animate_hexrotor(Xsim, Xref, dt)
         mc.atframe(anim, k) do
             r = Xsim[k][1:3]
             p = Xsim[k][7:9]
-            mc.settransform!(vis[:vic], mc.compose(mc.Translation(r),mc.LinearMap(1.5*(dcm_from_mrp(p)))))
-            mc.settransform!(vis[:target], mc.Translation(Xref[k][1:3]))
+            mc.settransform!(vis[:drone], mc.compose(mc.Translation(r),mc.LinearMap(1.5*(dcm_from_mrp(p)))))
+            #mc.settransform!(vis[:target], mc.Translation(Xref[k][1:3]))
         end
     end
     mc.setanimation!(vis, anim)
