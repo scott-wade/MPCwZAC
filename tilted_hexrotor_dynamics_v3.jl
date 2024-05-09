@@ -265,9 +265,9 @@ end
 
 function animate_hexrotor(Xsim, dt)
     vis = mc.Visualizer()
-    #robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly_notilt.obj"))
+    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexrotor_assembly_notilt.obj"))
     #robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"quadrotor.obj"))
-    robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexarotor_tilted_props.obj"))
+    # robot_obj = mc.MeshFileGeometry(joinpath(@__DIR__,"hexarotor_tilted_props.obj"))
 
     #mc.setobject!(vis[:drone], robot_obj)
 
